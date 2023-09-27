@@ -1,19 +1,10 @@
 ---
-- hosts: tag_Name_Backend2:tag_Name_Backend2
+
+- name: Update Docker Image on Backend's
+  hosts: tag_Name_Backend1:tag_Name_Backend2
+  gather_facts: yes
   user: ubuntu
-  become: yes
-  tasks:
-
-- name: Stop running Docker containers
-  shell: >
-    sudo docker stop $(sudo docker ps -a -q)
-
-- name: Starting Image
-  shell: >
-    sudo docker pull ignatmike/devapp:stable && \
-    sudo docker run -d -p 9007:9007 ignatmike/devapp:stable
-
-- name: Starting node Exporter
-  shell: >
-    sudo docker run -d -p 9100:9100  --net="host"   --pid="host"   -v "/:/host:ro,rslave"   quay.io/prometheus/node-exporter:latest   --path.rootfs=/host
+  become: true
+  roles:
+    - { role: updater }
 
