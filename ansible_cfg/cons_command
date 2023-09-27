@@ -1,0 +1,6 @@
+sudo pacman -S python3 pip3
+sudo pip install botocore boto3 --break-system-packages
+sudo pacman -S ansible
+sudo ansible-galaxy collection install amazon.aws
+export AWS_ACCESS_KEY_ID='YOUR_KEY_ID'
+export AWS_SECRET_ACCESS_KEY='YOUR_SECRET'

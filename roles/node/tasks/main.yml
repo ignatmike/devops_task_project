@@ -1,0 +1,75 @@
+---
+- name: Installing docker, step 1
+  apt: name={{item}} state=absent
+  with_items:
+    - docker
+    - docker-engine
+    - docker.io
+    - containerd
+    - runc
+
+- name: Installing docker, step 2
+  apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400
+
+- name: Installing docker, step 3
+  apt: name={{item}} state=present
+  with_items:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
+
+- name: add GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: add docker repository to apt
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu bionic stable
+    state: present
+
+- name: Installing docker, final
+  apt: name={{item}} state=present
+  with_items:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+
+- name: Docker is running
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Gather Facts for EC2 Instance
+  ec2_metadata_facts:
+
+- name: Replace ip in nginx.conf
+  replace:
+    path: /etc/nginx/nginx.conf
+    regexp: "{{app_name}}"
+    replace: "{{ansible_ec2_public_ipv4}}"
+  delegate_to: "{{item}}"
+  with_items: "{{groups['tag_Name_Balancer']}}"
+
+- name: Display Public IP Address
+  debug:
+    var: ansible_ec2_public_ipv4
+
+- name: Stop running Docker containers
+  shell: >
+    sudo docker stop $(sudo docker ps -a -q)
+
+- name: Starting Image
+  shell: >
+    sudo docker pull ignatmike/devapp:stable && \
+    sudo docker run -d -p 9007:9007 ignatmike/devapp:stable
+
+- name: Starting node Exporter
+  shell: >
+    sudo docker run -d -p 9100:9100  --net="host"   --pid="host"   -v "/:/host:ro,rslave"   quay.io/prometheus/node-exporter:latest   --path.rootfs=/host
+

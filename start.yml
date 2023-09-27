@@ -1,0 +1,117 @@
+---
+- name: Request cloud for load balancer
+  hosts: localhost
+  roles:
+    - { role: deploy,
+      ec2secg: sg-0a5ab79882f3a3e15, ec2image: "ami-0989fb15ce71ba39e",
+      ec2type: "t3.micro", ec2key: "pap1r_stock_t3",
+      ec2name: "Balancer", ec2group: "Balancer"
+      }
+
+- name: Request cloud for app1
+  hosts: localhost
+  roles:
+    - { role: deploy,
+      ec2secg: sg-0a5ab79882f3a3e15, ec2image: "ami-0989fb15ce71ba39e",
+      ec2type: "t3.micro", ec2key: "pap1r_stock_t3",
+      ec2name: "Backend1", ec2group: "Backend"
+      }
+
+- name: Request cloud for app2
+  hosts: localhost
+  roles:
+    - { role: deploy,
+      ec2secg: sg-0a5ab79882f3a3e15, ec2image: "ami-0989fb15ce71ba39e",
+      ec2type: "t3.micro", ec2key: "pap1r_stock_t3",
+      ec2name: "Backend2", ec2group: "Backend"
+      }
+
+- name: Request cloud for webpage
+  hosts: localhost
+  roles:
+    - { role: deploy,
+      ec2secg: sg-0a5ab79882f3a3e15, ec2image: "ami-0989fb15ce71ba39e",
+      ec2type: "t3.micro", ec2key: "pap1r_stock_t3",
+      ec2name: "Webserver", ec2group: "Webserver"
+      }
+
+- name: Request cloud for monitoring
+  hosts: localhost
+  roles:
+    - { role: deploy,
+      ec2secg: sg-0a5ab79882f3a3e15, ec2image: "ami-0989fb15ce71ba39e",
+      ec2type: "t3.micro", ec2key: "pap1r_stock_t3",
+      ec2name: "Monitoring", ec2group: "Monitoring"
+      }
+
+- name: Install software
+  hosts: tag_Name_Webserver:tag_Name_Backend1:tag_Name_Backend2:tag_Name_Balancer:tag_Name_Monitoring
+  gather_facts: yes
+  user: ubuntu
+  become: true
+  become_method: sudo
+  become_user: root
+  roles:
+    - { role: soft  }
+
+- name: Configure balancer
+  hosts: tag_Name_Balancer
+  gather_facts: yes
+  user: ubuntu
+  become: true
+  roles:
+    - { role: balancer/config }
+
+- name: Configure backend
+  hosts: tag_Name_Backend1
+  gather_facts: yes
+  user: ubuntu
+  become: true
+  become_method: sudo
+  become_user: root
+  roles:
+    - { role: node, app_name: app1 }
+
+- name: Configure backend
+  hosts: tag_Name_Backend2
+  gather_facts: yes
+  user: ubuntu
+  become: true
+  become_method: sudo
+  become_user: root
+  roles:
+    - { role: node, app_name: app2 }
+
+- name: Install webpage
+  hosts: tag_Name_Webserver
+  gather_facts: yes
+  user: ubuntu
+  become: true
+  become_method: sudo
+  become_user: root
+  roles:
+    - { role: webpage  }
+
+- name: Start balancer
+  hosts: tag_Name_Balancer
+  gather_facts: yes
+  user: ubuntu
+  become: true
+  roles:
+    - { role: balancer/start }
+
+- name: Start monitoring
+  hosts: tag_Name_Backend1:tag_Name_Backend2
+  gather_facts: yes
+  user: ubuntu
+  become: true
+  roles:
+    - { role: monitoring/config }
+
+- name: Start monitoring
+  hosts: tag_Name_Monitoring
+  gather_facts: yes
+  user: ubuntu
+  become: true
+  roles:
+    - { role: monitoring/start }

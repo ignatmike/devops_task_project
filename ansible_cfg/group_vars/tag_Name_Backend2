@@ -1,0 +1,1 @@
+ansible_ssh_private_key_file: /home/ubuntu/.ssh/pap1r_stock_t3.pem

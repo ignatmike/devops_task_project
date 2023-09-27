@@ -1,0 +1,24 @@
+---
+- name: Gather Facts for EC2 Instance
+  ec2_metadata_facts:
+
+- name: Add a line to prometheus config
+  lineinfile:
+    path: /tmp/prometheus.yml
+    line: "    - {{ansible_ec2_public_ipv4}}:9100"
+    insertafter: EOF
+  delegate_to: "{{item}}"
+  with_items: "{{groups['tag_Name_Monitoring']}}"
+
+#- name: Stop running container
+#  shell: >
+#    sudo docker stop $(sudo docker ps -a -q)
+#  delegate_to: "{{item}}"
+#  with_items: "{{groups['tag_Name_Monitoring']}}"
+
+
+#- name: Install and run Prometheus
+#  shell: >
+#    sudo docker run -d -p 9090:9090 -v /tmp/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+#  delegate_to: "{{item}}"
+#  with_items: "{{groups['tag_Name_Monitoring']}}"
